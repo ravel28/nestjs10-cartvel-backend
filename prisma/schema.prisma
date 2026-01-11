@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  idUser    Int          @id @default(autoincrement()) @map("id_user")
+  email     String       @unique @map("email")
+  password  String       @map("password")
+  name      String       @map("name")
+  role      RoleUserEnum @default(USER) @map("role_user")
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  items        Item[]
+  carts        Cart[]
+  transactions Transaction[]
+
+  @@index([idUser, email])
+  @@map("users")
+}
+
+model Category {
+  idCategory Int      @id @default(autoincrement()) @map("id_category")
+  category   String   @unique @map("category")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  items Item[]
+
+  @@index([idCategory, category])
+  @@map("category")
+}
+
+model Item {
+  idItem      Int      @id @default(autoincrement()) @map("id_item")
+  itemName    String   @map("item_name")
+  userId      Int      @map("user_id")
+  categoryId  Int      @map("category_id")
+  photo       String   @map("photo")
+  qty         Int      @map("qty")
+  description String?  @map("description")
+  price       Float    @map("price")
+  isDelete    Boolean  @default(false) @map("is_delete")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  userUpload       Users             @relation(fields: [userId], references: [idUser])
+  categery         Category          @relation(fields: [categoryId], references: [idCategory])
+  carts            Cart[]
+  transactionItems TransactionItem[]
+
+  @@index([idItem, userId, categoryId])
+  @@map("items")
+}
+
+model Cart {
+  idCart Int @id @default(autoincrement()) @map("id_cart")
+  qty    Int @map("qty")
+  userId Int @map("user_id")
+  itemId Int @map("item_id")
+
+  userCart Users @relation(fields: [userId], references: [idUser])
+  itemCart Item  @relation(fields: [itemId], references: [idItem])
+
+  @@index([userId])
+  @@map("cart")
+}
+
+model Transaction {
+  idTransaction Int      @id @default(autoincrement()) @map("id_transaction")
+  noDraft       String   @map("no_draft")
+  userId        Int      @map("user_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  user             Users             @relation(fields: [userId], references: [idUser])
+  transactionItems TransactionItem[]
+
+  @@index([userId, createdAt])
+  @@map("transaction")
+}
+
+model TransactionItem {
+  idTransactionItem Int      @id @default(autoincrement()) @map("id_transaction_item")
+  qty               Int      @map("qty")
+  price             Int      @map("price")
+  itemId            Int      @map("item_id")
+  transactionId     Int      @map("transaction_id")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  item        Item        @relation(fields: [itemId], references: [idItem])
+  transaction Transaction @relation(fields: [transactionId], references: [idTransaction])
+
+  @@index([itemId, createdAt])
+  @@map("transaction_item")
+}
+
+enum RoleUserEnum {
+  SUPER_ADMIN
+  MITRA
+  USER
+}
