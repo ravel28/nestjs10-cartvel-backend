@@ -1,0 +1,45 @@
+version: '1.0'
+
+services:
+  postgresql:
+    image: postgres:13.5
+    container_name: velcart
+    restart: always
+    environment:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+    networks:
+      - ravel
+    ports:
+      - '5440:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  cartvel_backend:
+    image: nestjs:latest
+    container_name: cart-nest
+    restart: always
+    depends_on:
+      - postgresql
+    networks:
+      - ravel
+    ports:
+      - '8028:3000'
+    volumes:
+      - upload_excel:/app/uploads/photo
+    environment:
+      APPLICATION_NAME: cartvel-service
+      APPLICATION_PORT: 3000
+      NODE_ENV: dev
+      DATABASE_URL:
+
+volumes:
+  postgres_data:
+  upload_excel:
+  upload_pdf:
+
+networks:
+  opexnet:
+    external:
+      name: microservice_global_network
