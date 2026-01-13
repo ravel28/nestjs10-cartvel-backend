@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Put, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Res } from '@nestjs/common';
 import { CartsService } from './carts.service';
 import { BaseController } from 'src/cores/base.controller';
 import { Response } from 'express';
@@ -16,7 +16,7 @@ export class CartsController extends BaseController {
       return this.created(
         res,
         await this.cartsService.createCart(create),
-        'Item succesfully added to cart',
+        'Cart succesfully added to cart',
         null,
       );
     } catch (error) {
@@ -24,16 +24,42 @@ export class CartsController extends BaseController {
     }
   }
 
-  @Put('update/:id')
-  async updateCart(
-    @Res() res: Response,
-    @Body() update: CreateUpdateCartDto,
-    @Param('id') id: number,
-  ) {
+  @Get('view/:userId')
+  async viewCart(@Res() res: Response, @Param('userId') userId: number) {
     try {
+      return this.created(
+        res,
+        await this.cartsService.cartView(userId),
+        'Cart succesfully fetch',
+        null,
+      );
+    } catch (error) {
+      this.handleException(res, error);
+    }
+  }
+
+  @Put('update/add/:id')
+  async updateCartAdd(@Res() res: Response, @Param('id') id: number) {
+    try {
+      const option: string = 'add';
       return this.ok(
         res,
-        await this.cartsService.updateCart(id, update),
+        await this.cartsService.updateCart(id, option),
+        'Cart successfully updated',
+        null,
+      );
+    } catch (error) {
+      this.handleException(res, error);
+    }
+  }
+
+  @Put('update/minus/:id')
+  async updateCartMinus(@Res() res: Response, @Param('id') id: number) {
+    try {
+      const option: string = 'minus';
+      return this.ok(
+        res,
+        await this.cartsService.updateCart(id, option),
         'Cart successfully updated',
         null,
       );

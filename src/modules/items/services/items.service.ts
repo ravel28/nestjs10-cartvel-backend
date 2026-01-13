@@ -8,6 +8,7 @@ import { ItemDto } from '../dtos/item.dto';
 import { CreateItemDto } from '../dtos/create-item.dto';
 import { RoleUserEnum } from '@prisma/client';
 import BaseService from 'src/cores/services/base.service';
+import { updateItemDto } from '../dtos/update-item.dto';
 
 @Injectable()
 export class ItemsService extends BaseService {
@@ -19,23 +20,21 @@ export class ItemsService extends BaseService {
     try {
       const findUser = await this.prismaService.users.findUnique({
         where: {
-          idUser: createItem.userId,
+          idUser: Number(createItem.userId),
         },
       });
-      if (findUser.role !== RoleUserEnum.MITRA)
+      if (findUser.role !== RoleUserEnum.SUPER_ADMIN)
         throw new ForbiddenException('Role user must be Mitra');
 
-      console.log(createItem);
-      console.log(createItem.categoryId);
       return await this.prismaService.item.create({
         data: {
           itemName: createItem.itemName,
-          photo: '',
-          qty: createItem.qty,
-          price: createItem.price,
+          photo: createItem.photo,
+          qty: Number(createItem.qty),
+          price: Number(createItem.price),
           description: createItem.description,
-          userId: createItem.userId,
-          categoryId: createItem.categoryId,
+          userId: Number(createItem.userId),
+          categoryId: Number(createItem.categoryId),
         },
       });
     } catch (error) {
@@ -43,9 +42,26 @@ export class ItemsService extends BaseService {
     }
   }
 
+  async getItems(take: number): Promise<ItemDto[]> {
+    return await this.prismaService.item.findMany({
+      take: Number(take),
+    });
+  }
+
+  async getDetail(idItem: number): Promise<ItemDto> {
+    try {
+      const [{ data: getDetailItem }] = await this.prismaService.$queryRaw<
+        { data: ItemDto }[]
+      >`SELECT get_item_detail(${Number(idItem)}) as data`;
+      return getDetailItem;
+    } catch (error) {
+      this.handleErrorService(error);
+    }
+  }
+
   async updateItem(
     idItem: number,
-    updateItem: CreateItemDto,
+    updateItem: updateItemDto,
   ): Promise<ItemDto> {
     try {
       const findUser = await this.prismaService.users.findUnique({
@@ -53,20 +69,21 @@ export class ItemsService extends BaseService {
           idUser: updateItem.userId,
         },
       });
-      if (findUser.role !== RoleUserEnum.MITRA) throw new ForbiddenException();
+      if (findUser.role !== RoleUserEnum.SUPER_ADMIN)
+        throw new ForbiddenException();
+
+      const findStock: ItemDto = await this.prismaService.item.findUnique({
+        where: {
+          idItem: Number(idItem),
+        },
+      });
 
       return await this.prismaService.item.update({
         where: {
-          idItem: idItem,
+          idItem: Number(idItem),
         },
         data: {
-          itemName: updateItem.itemName,
-          photo: '',
-          qty: updateItem.qty,
-          price: updateItem.price,
-          description: updateItem.description,
-          userId: updateItem.userId,
-          categoryId: updateItem.categoryId,
+          qty: findStock.qty + updateItem.qty,
         },
       });
     } catch (error) {

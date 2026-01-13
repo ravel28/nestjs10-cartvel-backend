@@ -10,4 +10,7 @@ export class ItemDto {
   updatedAt: Date;
   userId: number;
   categoryId: number;
+
+  //Mapping
+  totalSold?: number;
 }

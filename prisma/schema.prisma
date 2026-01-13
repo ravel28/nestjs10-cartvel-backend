@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
 }
 
 datasource db {
@@ -10,11 +11,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+view CartView {
+  idCart   Int    @unique @map("id_cart")
+  userId   Int    @map("user_id")
+  qtyCart  Int    @map("qty_cart")
+  itemName String @map("item_name")
+  photo    String @map("photo")
+  price    Int    @map("price")
+  total    Int    @map("total")
+  itemId   Int    @map("item_id")
+
+  @@map("view_cart_item")
+}
+
+view TransactionView {
+  idTransaction Int      @id @map("id_transaction")
+  createdAt     DateTime @map("created_at")
+  total         Int      @map("total")
+  userId        Int      @map("user_id")
+
+  @@map("view_transaction")
+}
+
 model Users {
   idUser    Int          @id @default(autoincrement()) @map("id_user")
   email     String       @unique @map("email")
   password  String       @map("password")
   name      String       @map("name")
+  phone     String       @map("phone")
+  address   String       @map("address")
   role      RoleUserEnum @default(USER) @map("role_user")
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)

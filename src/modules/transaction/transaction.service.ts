@@ -13,7 +13,7 @@ export class TransactionService extends BaseService {
   async createTransaction(create: CreateTransactionDto[]): Promise<string> {
     try {
       const result = await this.prismaService.$transaction(async (tx) => {
-        const noDraft = null;
+        const noDraft = '';
         const createTransaction: TransactionDto =
           await this.prismaService.transaction.create({
             data: {
@@ -23,22 +23,35 @@ export class TransactionService extends BaseService {
           });
         await Promise.all(
           create.map(async (transactionUser: CreateTransactionDto) => {
-            const transaction: TransactionItemDto =
-              await tx.transactionItem.create({
-                data: {
-                  qty: transactionUser.qty,
-                  price: transactionUser.price,
-                  itemId: transactionUser.itemId,
-                  transactionId: createTransaction.idTransaction,
-                },
-              });
+            await tx.transactionItem.create({
+              data: {
+                qty: transactionUser.qty,
+                price: transactionUser.price,
+                itemId: transactionUser.itemId,
+                transactionId: createTransaction.idTransaction,
+              },
+            });
           }),
         );
+
+        await this.prismaService.cart.deleteMany({
+          where: {
+            userId: create[0].userId,
+          },
+        });
       });
 
       return 'Transaction Succesfully created';
     } catch (error) {
       this.handleErrorService(error);
     }
+  }
+
+  async getTransaction(userId: number) {
+    return await this.prismaService.transactionView.findMany({
+      where: {
+        userId: Number(userId),
+      },
+    });
   }
 }
